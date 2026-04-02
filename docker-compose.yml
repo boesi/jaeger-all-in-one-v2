@@ -1,0 +1,66 @@
+services:
+  jaeger:
+    # jaegertracing/jaeger ist das offizielle v2-Image (kein all-in-one mehr).
+    # Das Image läuft als User 10001 – das Badger-Verzeichnis muss diesem
+    # User gehören (siehe init-Container unten).
+    image: jaegertracing/jaeger:2.17.0
+    container_name: jaeger
+
+    # Die Konfigurationsdatei wird per --config übergeben.
+    # WICHTIG: Ohne --config startet Jaeger v2 immer mit In-Memory-Storage,
+    # Environment Variables wie SPAN_STORAGE_TYPE werden ignoriert.
+    command: ["--config", "/etc/jaeger/jaeger-config.yaml"]
+
+    ports:
+      # Jaeger UI + Query HTTP API
+      - "16686:16686"
+      # Query gRPC API (für externe Tools)
+      - "16685:16685"
+      # OTLP gRPC – primärer Eingang vom opentelemetry-maven-extension
+      - "4317:4317"
+      # OTLP HTTP – alternatives Protokoll
+      - "4318:4318"
+      # Health Check
+      - "13133:13133"
+
+    volumes:
+      # Konfigurationsdatei einbinden
+      - ./jaeger-config.yaml:/etc/jaeger/jaeger-config.yaml:ro
+      # Persistentes Volume für Badger-Daten
+      - jaeger-data:/badger
+
+    # init-Container: setzt Ownership auf User 10001, bevor Jaeger startet.
+    # Ohne diesen Schritt schlägt das Anlegen der Badger-Dateien mit
+    # "permission denied" fehl, weil Docker Volumes als root angelegt werden.
+    depends_on:
+      jaeger-init:
+        condition: service_completed_successfully
+
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider",
+             "http://localhost:13133/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # Init-Container: einmaliger Setup-Schritt für Verzeichnis-Permissions.
+  # Jaeger v2 läuft als User 10001 (non-root).
+  jaeger-init:
+    image: busybox:latest
+    container_name: jaeger-init
+    command: >
+      sh -c "mkdir -p /badger/keys /badger/values &&
+             chown -R 10001:10001 /badger &&
+             chmod -R 755 /badger &&
+             echo 'Badger directories initialized'"
+    volumes:
+      - jaeger-data:/badger
+
+volumes:
+  # Benanntes Docker-Volume – überlebt Container-Neustarts und
+  # docker compose down (aber NICHT docker compose down -v).
+  jaeger-data:
+    driver: local

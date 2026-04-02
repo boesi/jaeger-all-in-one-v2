@@ -1,0 +1,87 @@
+# Jaeger v2 Konfiguration
+# Jaeger v2 basiert auf dem OpenTelemetry Collector Framework –
+# die Konfiguration folgt dessen Schema (extensions, receivers, processors,
+# exporters, service/pipelines).
+
+service:
+  extensions: [jaeger_storage, jaeger_query, healthcheckv2]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [jaeger_storage_exporter]
+  telemetry:
+    resource:
+      service.name: jaeger
+    logs:
+      level: info
+
+# ---------------------------------------------------------------------------
+# Extensions
+# ---------------------------------------------------------------------------
+extensions:
+
+  # Health-Check Endpunkt (Jaeger v2 verwendet healthcheckv2, nicht healthcheck)
+  healthcheckv2:
+    use_v2: true
+    http:
+      endpoint: "0.0.0.0:13133"
+
+  # Storage-Konfiguration
+  # Badger ist Jaegers eingebettetes Key-Value-Storage (basiert auf dgraph-io/badger).
+  # Mit ephemeral: false und einem gemounteten Volume persistieren die Daten.
+  jaeger_storage:
+    backends:
+      main_store:
+        badger:
+          # Beide Verzeichnisse auf dasselbe Volume-Mount legen.
+          # keys  = Index-Dateien (bevorzugt SSD)
+          # values = Span-Daten
+          directories:
+            keys: "/badger/keys"
+            values: "/badger/values"
+          ephemeral: false
+          ttl:
+            # Traces werden 72 Stunden aufbewahrt (anpassbar)
+            spans: 72h
+
+  # Query-Service mit UI
+  jaeger_query:
+    storage:
+      traces: main_store
+    ui: {}
+    grpc:
+      endpoint: "0.0.0.0:16685"
+    http:
+      endpoint: "0.0.0.0:16686"
+
+# ---------------------------------------------------------------------------
+# Receivers
+# ---------------------------------------------------------------------------
+receivers:
+  # Ausschließlich OTLP – kein Jaeger-Thrift, kein Zipkin.
+  # Das opentelemetry-maven-extension sendet per OTLP/gRPC (Standard: Port 4317)
+  # oder OTLP/HTTP (Port 4318). Beide werden hier aktiviert.
+  otlp:
+    protocols:
+      grpc:
+        endpoint: "0.0.0.0:4317"
+      http:
+        endpoint: "0.0.0.0:4318"
+
+# ---------------------------------------------------------------------------
+# Processors
+# ---------------------------------------------------------------------------
+processors:
+  # Batch-Processor puffert Spans vor dem Schreiben – reduziert I/O-Last
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+
+# ---------------------------------------------------------------------------
+# Exporters
+# ---------------------------------------------------------------------------
+exporters:
+  # Schreibt Traces in das oben konfigurierte Badger-Backend
+  jaeger_storage_exporter:
+    trace_storage: main_store
