@@ -23,7 +23,7 @@ services:
       # Konfigurationsdatei einbinden
       - ./jaeger-config.yaml:/etc/jaeger/jaeger-config.yaml:ro
       # Persistentes Volume für Badger-Daten
-      - jaeger-data:/badger
+      - ./data:/badger
 
     # init-Container: setzt Ownership auf User 10001, bevor Jaeger startet.
     # Ohne diesen Schritt schlägt das Anlegen der Badger-Dateien mit
@@ -45,10 +45,10 @@ services:
              chmod -R 755 /badger &&
              echo 'Badger directories initialized'"
     volumes:
-      - jaeger-data:/badger
+      - ./data:/badger
 
-volumes:
-  # Benanntes Docker-Volume – überlebt Container-Neustarts und
-  # docker compose down (aber NICHT docker compose down -v).
-  jaeger-data:
-    driver: local
+# volumes:
+#   # Benanntes Docker-Volume – überlebt Container-Neustarts und
+#   # docker compose down (aber NICHT docker compose down -v).
+#   jaeger-data:
+#     driver: local
