@@ -49,11 +49,8 @@ The `.mvn/` folder contains minimal configuration files for the OpenTelemetry Ma
 ## Stopping
 
 ```bash
-# Stop and keep data (storage-badger)
+# Stop
 docker compose down
-
-# Stop and delete everything (storage-badger)
-docker compose down -v
 ```
 
 ## Troubleshooting
