@@ -17,13 +17,13 @@ docker compose up -d
 
 Jaeger UI: http://localhost:16686
 
-## Stoppen (Daten bleiben erhalten)
+## Stop - keep files (for storage-badger)
 
 ```bash
 docker compose down
 ```
 
-## Stop + Delete files (for storage-badger)
+## Stop - delete files (for storage-badger)
 
 ```bash
 docker compose down -v
