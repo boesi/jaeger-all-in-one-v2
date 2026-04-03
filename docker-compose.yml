@@ -14,14 +14,10 @@ services:
     ports:
       # Jaeger UI + Query HTTP API
       - "16686:16686"
-      # Query gRPC API (für externe Tools)
-      - "16685:16685"
       # OTLP gRPC – primärer Eingang vom opentelemetry-maven-extension
       - "4317:4317"
       # OTLP HTTP – alternatives Protokoll
       - "4318:4318"
-      # Health Check
-      - "13133:13133"
 
     volumes:
       # Konfigurationsdatei einbinden
@@ -37,14 +33,6 @@ services:
         condition: service_completed_successfully
 
     restart: unless-stopped
-
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider",
-             "http://localhost:13133/"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
 
   # Init-Container: einmaliger Setup-Schritt für Verzeichnis-Permissions.
   # Jaeger v2 läuft als User 10001 (non-root).

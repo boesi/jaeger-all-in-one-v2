@@ -4,28 +4,16 @@
 # exporters, service/pipelines).
 
 service:
-  extensions: [jaeger_storage, jaeger_query, healthcheckv2]
+  extensions: [jaeger_storage, jaeger_query]
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [batch]
       exporters: [jaeger_storage_exporter]
-  telemetry:
-    resource:
-      service.name: jaeger
-    logs:
-      level: info
 
 # ---------------------------------------------------------------------------
 # Extensions
 # ---------------------------------------------------------------------------
 extensions:
-
-  # Health-Check Endpunkt (Jaeger v2 verwendet healthcheckv2, nicht healthcheck)
-  healthcheckv2:
-    use_v2: true
-    http:
-      endpoint: "0.0.0.0:13133"
 
   # Storage-Konfiguration
   # Badger ist Jaegers eingebettetes Key-Value-Storage (basiert auf dgraph-io/badger).
@@ -42,18 +30,15 @@ extensions:
             values: "/badger/values"
           ephemeral: false
           ttl:
-            # Traces werden 72 Stunden aufbewahrt (anpassbar)
-            spans: 72h
+            # Traces werden 720 Stunden aufbewahrt (anpassbar)
+            # Wie kann man eine unbegrenztes Speichern einrichten?
+            # bei einem Wert von 0 nimmt Jaeger keine neuen Traces an
+            spans: 720h
 
   # Query-Service mit UI
   jaeger_query:
     storage:
       traces: main_store
-    ui: {}
-    grpc:
-      endpoint: "0.0.0.0:16685"
-    http:
-      endpoint: "0.0.0.0:16686"
 
 # ---------------------------------------------------------------------------
 # Receivers
@@ -68,15 +53,6 @@ receivers:
         endpoint: "0.0.0.0:4317"
       http:
         endpoint: "0.0.0.0:4318"
-
-# ---------------------------------------------------------------------------
-# Processors
-# ---------------------------------------------------------------------------
-processors:
-  # Batch-Processor puffert Spans vor dem Schreiben – reduziert I/O-Last
-  batch:
-    timeout: 5s
-    send_batch_size: 1024
 
 # ---------------------------------------------------------------------------
 # Exporters
