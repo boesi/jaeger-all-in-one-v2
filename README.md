@@ -5,7 +5,7 @@ There are two configurations:
 - storage only in memory, you loose your traces, if you shutdown the container
 - persistent locale storage with badger
 
-For convenience there is a minimal configuration for opentelemetry-maven-extenion. Put the folder .mvn in your project folder.
+For convenience there is a minimal configuration for [opentelemetry-maven-extenion](https://github.com/open-telemetry/opentelemetry-java-contrib/blob/main/maven-extension/README.md). Put the folder .mvn in your project folder.
 
 Persistentes Tracing-Backend für das `opentelemetry-maven-extension`.
 
