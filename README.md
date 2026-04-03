@@ -7,14 +7,6 @@ A lightweight, all-in-one Jaeger v2 setup designed to work seamlessly with the [
 - Docker & Docker Compose installed
 - Java/Maven project
 
-## Quick Start
-
-```bash
-docker compose up -d
-```
-
-Jaeger UI: http://localhost:16686
-
 ## Storage Options
 
 ### Memory Storage (Default)
@@ -29,6 +21,8 @@ To switch configurations:
 cd storage-memory    # or storage-badger
 docker compose up -d
 ```
+
+Jaeger UI: http://localhost:16686
 
 ## Usage with OpenTelemetry Maven Extension
 
