@@ -3,7 +3,7 @@ services:
     # jaegertracing/jaeger ist das offizielle v2-Image (kein all-in-one mehr).
     # Das Image läuft als User 10001 – das Badger-Verzeichnis muss diesem
     # User gehören (siehe init-Container unten).
-    image: jaegertracing/jaeger:2.17.0
+    image: docker.io/jaegertracing/jaeger:2.17.0
     container_name: jaeger
 
     # Die Konfigurationsdatei wird per --config übergeben.
